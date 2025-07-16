@@ -17,8 +17,11 @@
 */
 
 #include "swgameserver.h"
+
+#if defined POSIX
 #include <dlfcn.h>
 #include <link.h>
+#endif
 
 static void GetGameSpecificConfigInterface(const char *pName, const char *&pVersion)
 {
@@ -238,6 +241,7 @@ void SteamWorksGameServer::GetUserAndPipe(HSteamUser &hSteamUser, HSteamPipe &hS
 	hSteamPipe = SteamGameServer_GetHSteamPipe();
 }
 
+#if defined POSIX
 std::string get_loaded_library_path(const std::string& libname) {
     struct search_data_t {
         const std::string& name;
@@ -257,6 +261,7 @@ std::string get_loaded_library_path(const std::string& libname) {
 
     return search_data.path;
 }
+#endif
 
 const char *SteamWorksGameServer::GetLibraryPath(void)
 {
