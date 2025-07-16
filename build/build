@@ -6,7 +6,7 @@ _CURRENT_DIR=$(pwd)
 
 cd "../assets/sourcemod-central/public/safetyhook"
 python3 amalgamate.py
-cd "$(_CURRENT_DIR)"
+cd "$_CURRENT_DIR"
 
 echo ">> Creating legacy symlinks..."
 

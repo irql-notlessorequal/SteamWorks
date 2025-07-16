@@ -14,7 +14,7 @@ jobs:
     strategy:
       matrix:
         python-version: [ 3.11 ]
-        os: [ ubuntu-18.04 ]
+        os: [ ubuntu-22.04 ]
 
     steps:
     - uses: actions/checkout@v2
@@ -26,7 +26,7 @@ jobs:
       if: runner.os == 'Linux'
       run: |
         sudo dpkg --add-architecture i386
-        sudo apt-get install bash lib32stdc++-7-dev lib32z1-dev libc6-dev-i386
+        sudo apt-get install bash lib32z1-dev libc6-dev-i386
         sudo apt-get install g++-multilib
     - uses: actions/checkout@v2
       name: Clone AMBuild
