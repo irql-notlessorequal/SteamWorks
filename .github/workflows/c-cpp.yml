@@ -57,8 +57,8 @@ jobs:
         repository: 'alliedmodders/sourcemod'
         ref: '1.7-dev'
         path: 'assets/sourcemod-central'
-    - name: Create Build folder
-      run: mkdir build
+#    - name: Create Build folder
+#      run: mkdir build
     - name: Create redundant AMBuildScript
       run: cp AMBuildScript ../
     - name: Configure
