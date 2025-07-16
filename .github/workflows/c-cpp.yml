@@ -36,9 +36,9 @@ jobs:
     - uses: actions/checkout@v2
       name: Clone SteamworksSDK
       with:
-# TODO: Migrate this to my own copy of the SteamworksSDK.
-        repository: 'rlabrecque/SteamworksSDK'
+        repository: 'irql-notlessorequal/SteamworksSDK'
         path: 'assets/SteamworksSDK'
+        token: ${{ secrets.STEAMWORKS_SDK_OAUTH }}
     - uses: actions/checkout@v2
       name: Clone hl2sdk-sdk2013
       with:
@@ -49,22 +49,20 @@ jobs:
       name: Clone Metamod Source
       with:
         repository: 'alliedmodders/metamod-source'
-        ref: '1.10-dev'
+        ref: '1.12-dev'
         path: 'assets/mmsource-central'
     - uses: actions/checkout@v2
       name: Clone Sourcemod
       with:
         repository: 'alliedmodders/sourcemod'
-        ref: '1.7-dev'
+        ref: '1.12-dev'
         path: 'assets/sourcemod-central'
-#    - name: Create Build folder
-#      run: mkdir build
     - name: Create redundant AMBuildScript
       run: cp AMBuildScript ../
     - name: Configure
       run: |
         cd build
-        python ../configure.py -s sdk2013 --hl2sdk-root ../assets --sm-path ../assets/sourcemod-central --mms-path ../assets/mmsource-central --steamworks-path ../assets/SteamworksSDK
+        python ../configure.py -s sdk2013 --hl2sdk-root ../assets --sm-path ../assets/sourcemod-central --mms-path ../assets/mmsource-central --steamworks-path ../assets/SteamworksSDK/sdk
     - name: Build
       run: |
         cd build
