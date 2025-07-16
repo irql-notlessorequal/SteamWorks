@@ -39,6 +39,8 @@ for sdk_name in SteamWorks.sdks:
       binary.compiler.postlink += os.path.join(SteamWorks.steamworks_root, 'redistributable_bin', 'linux32', 'libsteam_api.so'),;
 	
   if binary.compiler.target.platform == 'windows':
+    binary.compiler.cxxflags += [ '/std:c++20' ]
+
     if binary.compiler.target.arch == 'x86_64':
       binary.compiler.postlink += os.path.join(SteamWorks.steamworks_root, 'redistributable_bin', 'win64', 'steam_api64.lib'),;
     else:
