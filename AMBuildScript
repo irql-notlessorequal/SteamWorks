@@ -271,13 +271,16 @@ class SteamWorksConfig(object):
     compiler.includes += [
       os.path.join(context.currentSourcePath),
       os.path.join(context.currentSourcePath, 'sdk'),
-      os.path.join(context.currentSourcePath, 'CDetour'),
 
       os.path.join(self.sm_root, 'public'),
       os.path.join(self.sm_root, 'public', 'extensions'),
       os.path.join(self.sm_root, 'sourcepawn', 'include'),
       os.path.join(self.sm_root, 'public', 'amtl'),
       os.path.join(self.sm_root, 'public', 'amtl', 'amtl'),
+
+      # Safetyhook, Zydis and CDetour are now submodules.
+      os.path.join(self.sm_root, 'public', 'safetyhook', 'zydis'),
+      os.path.join(self.sm_root, 'public', 'safetyhook', 'include')
     ]
     return compiler
 	

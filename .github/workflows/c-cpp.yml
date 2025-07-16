@@ -12,7 +12,7 @@ jobs:
     strategy:
       matrix:
         python-version: [ 3.11 ]
-        os: [ ubuntu-18.04, windows-latest ]
+        os: [ ubuntu-18.04 ]
 
     steps:
     - uses: actions/checkout@v2
@@ -24,7 +24,7 @@ jobs:
       if: runner.os == 'Linux'
       run: |
         sudo dpkg --add-architecture i386
-        sudo apt-get install lib32stdc++-7-dev lib32z1-dev libc6-dev-i386
+        sudo apt-get install bash lib32stdc++-7-dev lib32z1-dev libc6-dev-i386
         sudo apt-get install g++-multilib
     - uses: actions/checkout@v2
       name: Clone AMBuild
@@ -51,19 +51,16 @@ jobs:
         repository: 'alliedmodders/metamod-source'
         ref: '1.12-dev'
         path: 'assets/mmsource-central'
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
       name: Clone Sourcemod
       with:
         repository: 'alliedmodders/sourcemod'
+        submodules: recursive
         ref: '1.12-dev'
         path: 'assets/sourcemod-central'
     - name: Create redundant AMBuildScript
       run: cp AMBuildScript ../
-    - name: Configure
+    - name: Run build script
       run: |
         cd build
-        python ../configure.py -s sdk2013 --hl2sdk-root ../assets --sm-path ../assets/sourcemod-central --mms-path ../assets/mmsource-central --steamworks-path ../assets/SteamworksSDK/sdk
-    - name: Build
-      run: |
-        cd build
-        ambuild
+        bash ./build

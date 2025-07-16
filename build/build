@@ -1,12 +1,25 @@
 #!/bin/bash
 
-ln -s ../sdk/hl2sdk-manifests ../
-ln -s ../../sdk/CDetour ../Extension
+echo ">> Generating safetyhook amalgate..."
+
+_CURRENT_DIR=$(pwd)
+
+cd "../assets/sourcemod-central/public/safetyhook"
+python3 amalgamate.py
+cd "$(_CURRENT_DIR)"
+
+echo ">> Creating legacy symlinks..."
+
+ln -s ../assets/sourcemod-central/public/CDetour ../Extension
+ln -s ../assets/sourcemod-central/public/safetyhook/zydis ../Extension
+ln -s ../assets/sourcemod-central/public/safetyhook/amalgamated-dist ../Extension
+
+echo ">> Compiling."
 
 python3 ../configure.py -s sdk2013 \
-        --hl2sdk-root `realpath ../../sdk` \
-        --mms-path ../../sdk/mmsource \
-        --sm-path ../../sdk/sourcemod \
-	--steamworks-path ../../sdk/steamworks \
+        --hl2sdk-root `realpath ../assets` \
+        --mms-path ../assets/mmsource-central \
+        --sm-path ../assets/sourcemod-central \
+	--steamworks-path ../assets/SteamworksSDK/sdk \
         --target x86_64
 ambuild

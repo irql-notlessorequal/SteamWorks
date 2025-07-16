@@ -17,8 +17,10 @@ project.sources += [
   'swgchooks.cpp',
   'sdk/smsdk_ext.cpp',
 
-  'CDetour/Zydis.c',
-  'CDetour/safetyhook.cpp',
+# These are all symlinked during compile,
+# check the build script for more details.
+  'zydis/Zydis.c',
+  'amalgamated-dist/safetyhook.cpp',
   'CDetour/detours.cpp',
 ]
 
