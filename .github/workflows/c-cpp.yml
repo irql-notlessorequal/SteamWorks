@@ -36,9 +36,9 @@ jobs:
     - uses: actions/checkout@v2
       name: Clone SteamworksSDK
       with:
-        repository: 'SteamDatabase/SteamworksSDK'
+# TODO: Migrate this to my own copy of the SteamworksSDK.
+        repository: 'rlabrecque/SteamworksSDK'
         path: 'assets/SteamworksSDK'
-        token: ${{ secrets.OAUTH }}
     - uses: actions/checkout@v2
       name: Clone hl2sdk-sdk2013
       with:
