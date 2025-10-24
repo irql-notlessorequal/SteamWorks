@@ -5,7 +5,7 @@ echo ">> Generating safetyhook amalgate..."
 _CURRENT_DIR=$(pwd)
 
 cd "../assets/sourcemod-central/public/safetyhook"
-python3 amalgamate.py
+python3 amalgamate.py --polyfill
 cd "$_CURRENT_DIR"
 
 echo ">> Creating legacy symlinks..."
