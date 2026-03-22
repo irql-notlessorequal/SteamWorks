@@ -19,9 +19,9 @@ jobs:
         os: [ windows-latest, ubuntu-24.04, ubuntu-22.04 ]
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v6
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v6
       with:
         python-version: ${{ matrix.python-version }}
     - name: Install Deps
@@ -35,20 +35,20 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get install -y clang-15
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v6
       name: Clone AMBuild
       with:
         repository: 'alliedmodders/ambuild'
         path: 'assets/ambuild'
     - name: install AMBuild
       run: pip install ./assets/ambuild
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v6
       name: Clone SteamworksSDK
       with:
         repository: 'irql-notlessorequal/SteamworksSDK'
         path: 'assets/SteamworksSDK'
         token: ${{ secrets.STEAMWORKS_SDK_OAUTH }}
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v6
       name: Clone hl2sdk-sdk2013
       with:
         repository: 'alliedmodders/hl2sdk'
@@ -56,13 +56,13 @@ jobs:
         path: 'assets/hl2sdk-sdk2013'
     # Currently using SourceMod 1.12, once 1.13 is stable then
     # the build system will use that as the basis for compilation.
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v6
       name: Clone Metamod Source
       with:
         repository: 'alliedmodders/metamod-source'
         ref: '1.12-dev'
         path: 'assets/mmsource-central'
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v6
       name: Clone Sourcemod
       with:
         repository: 'alliedmodders/sourcemod'
@@ -75,7 +75,7 @@ jobs:
       run: |
         cd build
         bash ./build
-    - uses: actions/upload-artifact@v4
+    - uses: actions/upload-artifact@v6
       name: Upload build artifacts
       with:
         name: "steamworks-x64-${{matrix.os}}-git"
