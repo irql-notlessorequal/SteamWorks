@@ -14,7 +14,9 @@ jobs:
     strategy:
       matrix:
         python-version: [ 3.11 ]
-        os: [ windows-latest, ubuntu-24.04 ]
+        # Ubuntu 24.04 builds will be available until the end of 2029.
+        # Ubuntu 22.04 builds will be available until the end of 2027.
+        os: [ windows-latest, ubuntu-24.04, ubuntu-22.04 ]
 
     steps:
     - uses: actions/checkout@v2
@@ -28,6 +30,11 @@ jobs:
         sudo dpkg --add-architecture i386
         sudo apt-get install bash lib32z1-dev libc6-dev-i386
         sudo apt-get install g++-multilib
+    - name: Update Clang (ubuntu-22.04 only)
+      if: matrix.os == 'ubuntu-22.04'
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y clang-15
     - uses: actions/checkout@v2
       name: Clone AMBuild
       with:
@@ -47,6 +54,8 @@ jobs:
         repository: 'alliedmodders/hl2sdk'
         ref: 'sdk2013'
         path: 'assets/hl2sdk-sdk2013'
+    # Currently using SourceMod 1.12, once 1.13 is stable then
+    # the build system will use that as the basis for compilation.
     - uses: actions/checkout@v2
       name: Clone Metamod Source
       with:
