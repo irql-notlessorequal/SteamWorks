@@ -17,6 +17,7 @@ jobs:
         # Ubuntu 24.04 builds will be available until the end of 2029.
         # Ubuntu 22.04 builds will be available until the end of 2027.
         os: [ windows-latest, ubuntu-24.04, ubuntu-22.04 ]
+        sm-version: [ "1.12-dev", "1.13-dev" ]
 
     steps:
     - uses: actions/checkout@v6
@@ -54,20 +55,18 @@ jobs:
         repository: 'alliedmodders/hl2sdk'
         ref: 'sdk2013'
         path: 'assets/hl2sdk-sdk2013'
-    # Currently using SourceMod 1.12, once 1.13 is stable then
-    # the build system will use that as the basis for compilation.
     - uses: actions/checkout@v6
       name: Clone Metamod Source
       with:
         repository: 'alliedmodders/metamod-source'
-        ref: '1.12-dev'
+        ref: ${{ matrix.sm-version == '1.13-dev' && 'master' || matrix.sm-version }}
         path: 'assets/mmsource-central'
     - uses: actions/checkout@v6
       name: Clone Sourcemod
       with:
         repository: 'alliedmodders/sourcemod'
         submodules: recursive
-        ref: '1.12-dev'
+        ref: ${{ matrix.sm-version == '1.13-dev' && 'master' || matrix.sm-version }}
         path: 'assets/sourcemod-central'
     - name: Create redundant AMBuildScript
       run: cp AMBuildScript ../
@@ -78,7 +77,7 @@ jobs:
     - uses: actions/upload-artifact@v6
       name: Upload build artifacts
       with:
-        name: "steamworks-x64-${{matrix.os}}-git"
+        name: "steamworks-x64-${{ matrix.sm-version }}-${{ matrix.os }}-git"
         path: build/package/
         if-no-files-found: error
         retention-days: 90
