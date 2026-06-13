@@ -220,7 +220,11 @@ static cell_t sm_SetCallbacks(IPluginContext *pContext, const cell_t *params)
 	IPlugin *pPlugin;
 	if (params[5] == BAD_HANDLE)
 	{
+#if SOURCEMOD_V_MAJOR >= 1 && SOURCEMOD_V_MINOR >= 13
+		pPlugin = plsys->FindPluginByContext(pContext);
+#else
 		pPlugin = plsys->FindPluginByContext(pContext->GetContext());
+#endif
 	} else {
 		HandleError err;
 		pPlugin = plsys->PluginFromHandle(params[5], &err);
@@ -518,7 +522,11 @@ static cell_t sm_GetHTTPResponseBodyCallback(IPluginContext *pContext, const cel
 	IPlugin *pPlugin;
 	if (params[4] == BAD_HANDLE)
 	{
+#if SOURCEMOD_V_MAJOR >= 1 && SOURCEMOD_V_MINOR >= 13
+		pPlugin = plsys->FindPluginByContext(pContext);
+#else
 		pPlugin = plsys->FindPluginByContext(pContext->GetContext());
+#endif
 	} else {
 		HandleError err;
 		pPlugin = plsys->PluginFromHandle(params[4], &err);
