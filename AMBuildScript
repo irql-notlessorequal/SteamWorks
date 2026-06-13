@@ -112,6 +112,17 @@ class SteamWorksConfig(object):
     if not self.sm_root or not os.path.isdir(self.sm_root):
       raise Exception('Could not find a source copy of Sourcemod')
     self.sm_root = Normalize(self.sm_root)
+
+    version_file = os.path.join(self.sm_root, 'product.version')
+    if not os.path.isfile(version_file):
+      raise Exception('Could not find SourceMod product.version file')
+    with open(version_file, 'r') as f:
+      version = f.read().strip()
+    parts = version.split('.')
+    if len(parts) < 2:
+      raise Exception('Invalid SourceMod version format: {0}'.format(version))
+    self.sm_version_major = parts[0]
+    self.sm_version_minor = parts[1]
 	
 	#STEAMWORKS
     if builder.options.steamworks_path:
@@ -268,6 +279,10 @@ class SteamWorksConfig(object):
       cxx.defines += ['WIN32', '_WINDOWS']
 	  
   def ConfigureForExtension(self, context, compiler):
+    compiler.defines += [
+      'SOURCEMOD_V_MAJOR={0}'.format(self.sm_version_major),
+      'SOURCEMOD_V_MINOR={0}'.format(self.sm_version_minor),
+    ]
     compiler.includes += [
       os.path.join(context.currentSourcePath),
       os.path.join(context.currentSourcePath, 'sdk'),
