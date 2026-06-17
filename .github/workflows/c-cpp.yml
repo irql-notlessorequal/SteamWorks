@@ -81,3 +81,23 @@ jobs:
         path: build/package/
         if-no-files-found: error
         retention-days: 90
+
+  build-info:
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+    - name: Summary
+      run: |
+        cat <<'EOF' >> $GITHUB_STEP_SUMMARY
+
+        ```
+        steamworks-x64-1.12-dev-ubuntu-22.04-git
+                    │     │           │
+                    │     │           └─ Build OS
+                    │     └─ SourceMod Version
+                    └─ SourceMod Architecture
+        ```
+
+        > [!NOTE]
+        > `ubuntu-22.04` requires glibc >= 2.35, `ubuntu-24.04` requires glibc >= 2.39
+        EOF
