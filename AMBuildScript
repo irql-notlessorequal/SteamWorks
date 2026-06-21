@@ -166,10 +166,10 @@ class SteamWorksConfig(object):
         '-Wno-array-bounds',
         '-msse',
         #'-fPIC',
-		'-m32'
+				'-m32'
       ]
       cxx.cxxflags += [
-          '-std=c++20',
+				'-std=c++20',
       ]
 
       have_gcc = cxx.vendor == 'gcc'
