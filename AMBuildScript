@@ -191,8 +191,8 @@ class SteamWorksConfig(object):
           cxx.cxxflags += ['-Wno-deprecated']
         cxx.cflags += ['-Wno-sometimes-uninitialized']
 
-				cxx.linkflags += ['-m32']
-				cxx.cxxflags += [
+		cxx.linkflags += ['-m32']
+		cxx.cxxflags += [
         '-fno-exceptions',
         '-fno-threadsafe-statics',
         '-Wno-non-virtual-dtor',
