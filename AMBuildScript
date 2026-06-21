@@ -166,10 +166,10 @@ class SteamWorksConfig(object):
         '-Wno-array-bounds',
         '-msse',
         #'-fPIC',
-				'-m32'
+		'-m32'
       ]
       cxx.cxxflags += [
-				'-std=c++20',
+		'-std=c++20',
       ]
 
       have_gcc = cxx.vendor == 'gcc'
@@ -193,10 +193,10 @@ class SteamWorksConfig(object):
 
 		cxx.linkflags += ['-m32']
 		cxx.cxxflags += [
-        '-fno-exceptions',
-        '-fno-threadsafe-statics',
-        '-Wno-non-virtual-dtor',
-        '-Wno-overloaded-virtual',
+        	'-fno-exceptions',
+        	'-fno-threadsafe-statics',
+        	'-Wno-non-virtual-dtor',
+        	'-Wno-overloaded-virtual',
       ]
 
       if have_gcc:
