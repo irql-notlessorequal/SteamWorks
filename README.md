@@ -1,12 +1,12 @@
 # SteamWorks
 
-Exposing SteamWorks functions to SourcePawn, 64-bit edition.
+Exposing SteamWorks functions to SourcePawn.
 
 ## How to get a build
 
 Click on the Actions tab above, this will take you to a list of builds.
 
-Choose the latest build from the `x64` branch, as builds older than ninety days have their artifacts automatically removed.
+Choose the latest build from the `universal` branch, as builds older than ninety days have their artifacts automatically removed.
 
 > Make sure it has the "SteamWorks.ext Build" subtext!
 
