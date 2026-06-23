@@ -18,6 +18,10 @@ jobs:
         # Ubuntu 22.04 builds will be available until the end of 2027.
         os: [ windows-latest, ubuntu-24.04, ubuntu-22.04 ]
         sm-version: [ "1.12-dev", "1.13-dev" ]
+        arch: [ "x86_64", "x86" ]
+        exclude:
+          - sm-version: "1.12-dev"
+            arch: "x86"
 
     steps:
     - uses: actions/checkout@v6
@@ -73,11 +77,11 @@ jobs:
     - name: Run build script
       run: |
         cd build
-        bash ./build
+        bash ./build ${{ matrix.arch }}
     - uses: actions/upload-artifact@v6
       name: Upload build artifacts
       with:
-        name: "steamworks-x64-${{ matrix.sm-version }}-${{ matrix.os }}-git"
+        name: "steamworks-${{ matrix.arch == 'x86_64' && 'x64' || 'x86' }}-${{ matrix.sm-version }}-${{ matrix.os }}-git"
         path: build/package/
         if-no-files-found: error
         retention-days: 90
@@ -100,4 +104,7 @@ jobs:
 
         > [!NOTE]
         > `ubuntu-22.04` requires glibc >= 2.35, `ubuntu-24.04` requires glibc >= 2.39
+        
+        > [!IMPORTANT]
+        > For 32-bit builds, only the latest version of SourceMod is supported.
         EOF

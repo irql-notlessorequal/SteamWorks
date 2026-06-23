@@ -2,6 +2,7 @@
 
 echo ">> Generating safetyhook amalgate..."
 
+TARGET="${1:-x86_64}"
 _CURRENT_DIR=$(pwd)
 
 cd "../assets/sourcemod-central/public/safetyhook"
@@ -21,5 +22,5 @@ python3 ../configure.py -s sdk2013 \
         --mms-path ../assets/mmsource-central \
         --sm-path ../assets/sourcemod-central \
 	--steamworks-path ../assets/SteamworksSDK/sdk \
-        --target x86_64
+        --target $TARGET
 ambuild

@@ -3,8 +3,10 @@ import os
 
 builder.SetBuildFolder('package')
 
+arch = 'x64' if builder.cxx.target.arch == 'x86_64' else ''
+
 folder_list = [
-  'addons/sourcemod/extensions/x64',
+  f'addons/sourcemod/extensions{("/" + arch) if arch else ""}',
   'addons/sourcemod/scripting',
   'addons/sourcemod/scripting/include',
 ]
@@ -16,7 +18,7 @@ for folder in folder_list:
   folder_map[folder] = builder.AddFolder(norm_folder)
 
 for extension in SteamWorks.extensions:
-  builder.AddCopy(extension.binary, folder_map['addons/sourcemod/extensions/x64'])
+  builder.AddCopy(extension.binary, folder_map[f'addons/sourcemod/extensions{("/" + arch) if arch else ""}'])
 
 # Do all straight-up file copies from the source tree.
 def CopyFiles(src, dest, files):
