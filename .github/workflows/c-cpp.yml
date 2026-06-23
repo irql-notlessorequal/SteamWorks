@@ -2,9 +2,9 @@ name: SteamWorks.ext Build
 
 on:
   push:
-    branches: [ x64 ]
+    branches: [ universal ]
   pull_request:
-    branches: [ x64 ]
+    branches: [ universal ]
   schedule:
     - cron: "30 0 1 */3 *"
 
