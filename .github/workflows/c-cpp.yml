@@ -1,12 +1,7 @@
 name: SteamWorks.ext Build
 
 on:
-  push:
-    branches: [ x64 ]
-  pull_request:
-    branches: [ x64 ]
-  schedule:
-    - cron: "30 0 1 */3 *"
+  workflow_dispatch:
 
 jobs:
   build:

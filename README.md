@@ -2,6 +2,9 @@
 
 Exposing SteamWorks functions to SourcePawn, 64-bit edition.
 
+> [!WARNING]
+> This branch is no longer supported! Use the `universal` branch instead.
+
 ## How to get a build
 
 Click on the Actions tab above, this will take you to a list of builds.
