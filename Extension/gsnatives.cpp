@@ -217,12 +217,17 @@ static cell_t sm_UserHasLicenseForApp(IPluginContext *pContext, const cell_t *pa
 	{
 		return k_EUserHasLicenseResultNoAuth;
 	}
-	
-	int client = gamehelpers->ReferenceToIndex(params[1]);
-	IGamePlayer *pPlayer = playerhelpers->GetGamePlayer(client); /* Man, including GameHelpers and PlayerHelpers for this native :(. */
-	if (pPlayer == NULL || pPlayer->IsConnected() == false)
+
+	int client = params[1];
+	if (client < 1 || client > playerhelpers->GetMaxClients())
 	{
-		return pContext->ThrowNativeError("Client index %d is invalid", params[1]);
+		return pContext->ThrowNativeError("Client index %d is invalid", client);
+	}
+
+	IGamePlayer *pPlayer = playerhelpers->GetGamePlayer(client);
+	if (pPlayer == NULL || !pPlayer->IsConnected())
+	{
+		return pContext->ThrowNativeError("Client index %d is not connected", client);
 	}
 	
 	CSteamID checkid = CreateCommonCSteamID(pPlayer, params, 3, 4);
@@ -244,12 +249,16 @@ static cell_t sm_UserHasLicenseForAppId(IPluginContext *pContext, const cell_t *
 
 static cell_t sm_GetClientSteamID(IPluginContext *pContext, const cell_t *params)
 {
-	int client = gamehelpers->ReferenceToIndex(params[1]);
-	IGamePlayer *pPlayer = playerhelpers->GetGamePlayer(client);
-
-	if (pPlayer == NULL || pPlayer->IsConnected() == false)
+	int client = params[1];
+	if (client < 1 || client > playerhelpers->GetMaxClients())
 	{
-		return pContext->ThrowNativeError("Client index %d is invalid", params[1]);
+		return pContext->ThrowNativeError("Client index %d is invalid", client);
+	}
+
+	IGamePlayer *pPlayer = playerhelpers->GetGamePlayer(client);
+	if (pPlayer == NULL || !pPlayer->IsConnected())
+	{
+		return pContext->ThrowNativeError("Client index %d is not connected", client);
 	}
 
 	CSteamID steamId = CreateCommonCSteamID(pPlayer, params, 4, 5);
@@ -269,14 +278,19 @@ static cell_t sm_GetUserGroupStatus(IPluginContext *pContext, const cell_t *para
 
 	if (pServer == NULL)
 	{
-		return false;
+		return 0;
 	}
 
-	int client = gamehelpers->ReferenceToIndex(params[1]);
-	IGamePlayer *pPlayer = playerhelpers->GetGamePlayer(client); /* Man, including GameHelpers and PlayerHelpers for this native :(. */
-	if (pPlayer == NULL || pPlayer->IsConnected() == false)
+	int client = params[1];
+	if (client < 1 || client > playerhelpers->GetMaxClients())
 	{
-		return pContext->ThrowNativeError("Client index %d is invalid", params[1]);
+		return pContext->ThrowNativeError("Client index %d is invalid", client);
+	}
+
+	IGamePlayer *pPlayer = playerhelpers->GetGamePlayer(client);
+	if (pPlayer == NULL || !pPlayer->IsConnected())
+	{
+		return pContext->ThrowNativeError("Client index %d is not connected", client);
 	}
 
 	CSteamID checkid = CreateCommonCSteamID(pPlayer, params, 3, 4);
