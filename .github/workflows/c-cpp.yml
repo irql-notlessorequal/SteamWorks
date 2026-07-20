@@ -47,6 +47,11 @@ jobs:
         path: 'assets/ambuild'
     - name: install AMBuild
       run: pip install ./assets/ambuild
+    # !!! IMPORTANT !!!
+    # This repository is NOT public due to the license terms of
+    # the SteamWorks SDK! You must obtain your own copy of the SDK
+    # at https://partner.steamgames.com/?goto=%2Fdownloads%2Flist
+    # !!! IMPORTANT !!!
     - uses: actions/checkout@v6
       name: Clone SteamworksSDK
       with:
