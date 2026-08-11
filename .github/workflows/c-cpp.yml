@@ -29,17 +29,15 @@ jobs:
       uses: actions/setup-python@v6
       with:
         python-version: ${{ matrix.python-version }}
+    - name: Update APT repositories
+      if: runner.os == 'Linux'
+      run: sudo apt-get -y update
     - name: Install Deps
       if: runner.os == 'Linux'
       run: |
         sudo dpkg --add-architecture i386
         sudo apt-get install bash lib32z1-dev libc6-dev-i386
         sudo apt-get install g++-multilib
-    - name: Update Clang (ubuntu-22.04 only)
-      if: matrix.os == 'ubuntu-22.04'
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y clang-15
     - uses: actions/checkout@v6
       name: Clone AMBuild
       with:
