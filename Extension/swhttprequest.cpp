@@ -495,7 +495,7 @@ static cell_t sm_SetHTTPRequestRawPostBodyFromFile(IPluginContext *pContext, con
 	}
 
 	fseek(pInputFile, 0, SEEK_END);
-	uint32_t size = ftell(pInputFile);
+	long size = ftell(pInputFile);
 	fseek(pInputFile, 0, SEEK_SET);
 
 	if (size <= 0)
