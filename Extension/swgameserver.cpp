@@ -213,7 +213,7 @@ ISteamMatchmaking *SteamWorksGameServer::GetMatchmaking(void)
 		
 		const char *pVersion = STEAMMATCHMAKING_INTERFACE_VERSION;
 		GetGameSpecificConfigInterface("SteamMatchmakingVersion", pVersion);
-		this->m_pMatchmaking = this->GetSteamClient()->GetISteamMatchmaking(hSteamUser, hSteamPipe, STEAMMATCHMAKING_INTERFACE_VERSION);
+		this->m_pMatchmaking = this->GetSteamClient()->GetISteamMatchmaking(hSteamUser, hSteamPipe, pVersion);
 	}
 	
 	return this->m_pMatchmaking;
