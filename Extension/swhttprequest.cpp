@@ -329,7 +329,7 @@ static cell_t sm_SendHTTPRequestAndStreamResponse(IPluginContext *pContext, cons
 		return 0;
 	}
 
-	SteamAPICall_t hCall;
+	SteamAPICall_t hCall = k_uAPICallInvalid;
 	cell_t result = pHTTP->SendHTTPRequestAndStreamResponse(pRequest->request, &hCall) ? 1 : 0;
 
 	SetCallbacks(hCall, pRequest);
@@ -345,7 +345,7 @@ static cell_t sm_SendHTTPRequest(IPluginContext *pContext, const cell_t *params)
 		return 0;
 	}
 
-	SteamAPICall_t hCall;
+	SteamAPICall_t hCall = k_uAPICallInvalid;
 	cell_t result = pHTTP->SendHTTPRequest(pRequest->request, &hCall) ? 1 : 0;
 
 	SetCallbacks(hCall, pRequest);
