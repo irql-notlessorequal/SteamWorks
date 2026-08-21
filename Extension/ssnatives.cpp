@@ -137,7 +137,7 @@ static cell_t sm_GetStatFloat(IPluginContext *pContext, const cell_t *params)
 	pContext->LocalToPhysAddr(params[3], &pValue);
 	CSteamID checkid = CreateCommonCSteamID(pPlayer, params, 4, 5);
 	
-	float fValue;
+	float fValue = 0.0f;
 	bool bResult = pStats->GetUserStat(checkid, pName, &fValue);
 	
 	*pValue = sp_ftoc(fValue);
@@ -161,7 +161,7 @@ static cell_t sm_GetStatAuthIDFloat(IPluginContext *pContext, const cell_t *para
 	pContext->LocalToPhysAddr(params[3], &pValue);
 	CSteamID checkid = CreateCommonCSteamID(params[1], params, 4, 5);
 
-	float fValue;
+	float fValue = 0.0f;
 	bool bResult = pStats->GetUserStat(checkid, pName, &fValue);
 
 	*pValue = sp_ftoc(fValue);
