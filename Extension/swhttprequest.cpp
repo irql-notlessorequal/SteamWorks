@@ -61,14 +61,15 @@ static SteamWorksHTTPRequest *GetRequestPointer(ISteamHTTP *&pHTTP, IPluginConte
 	return pRequest;
 }
 
-SteamWorksHTTPRequest::SteamWorksHTTPRequest() :
-	request(INVALID_HTTPREQUEST_HANDLE),
-	handle(BAD_HANDLE),
-	pCompletedForward(NULL),
-	pHeadersReceivedForward(NULL),
-	pDataReceivedForward(NULL),
-	m_HeadersCallback(this, &SteamWorksHTTPRequest::OnHTTPHeadersReceived),
-	m_DataCallback(this, &SteamWorksHTTPRequest::OnHTTPDataReceived)
+SteamWorksHTTPRequest::SteamWorksHTTPRequest()
+	: request(INVALID_HTTPREQUEST_HANDLE),
+	  handle(BAD_HANDLE),
+	  CompletedCallResult(),
+	  m_HeadersCallback(this, &SteamWorksHTTPRequest::OnHTTPHeadersReceived),
+	  m_DataCallback(this, &SteamWorksHTTPRequest::OnHTTPDataReceived),
+	  pCompletedForward(NULL),
+	  pHeadersReceivedForward(NULL),
+	  pDataReceivedForward(NULL)
 {
 };
 
