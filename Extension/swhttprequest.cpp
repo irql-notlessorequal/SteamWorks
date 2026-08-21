@@ -30,6 +30,15 @@ static HandleType_t GetSteamHTTPHandle(void)
 	return g_SteamWorks.pSWHTTP->GetHTTPHandle();
 }
 
+static inline void ReleaseForward(IChangeableForward*& forward)
+{
+	if (forward)
+	{
+		forwards->ReleaseForward(forward);
+		forward = NULL;
+	}
+}
+
 static SteamWorksHTTPRequest *GetRequestPointer(ISteamHTTP *&pHTTP, IPluginContext *pContext, cell_t Handle)
 {
 	pHTTP = GetHTTPPointer();
@@ -72,14 +81,9 @@ SteamWorksHTTPRequest::~SteamWorksHTTPRequest()
 		this->request = INVALID_HTTPREQUEST_HANDLE;
 	}
 
-	forwards->ReleaseForward(this->pCompletedForward);
-	this->pCompletedForward = NULL;
-
-	forwards->ReleaseForward(this->pHeadersReceivedForward);
-	this->pHeadersReceivedForward = NULL;
-
-	forwards->ReleaseForward(this->pDataReceivedForward);
-	this->pDataReceivedForward = NULL;
+	ReleaseForward(this->pCompletedForward);
+	ReleaseForward(this->pHeadersReceivedForward);
+	ReleaseForward(this->pDataReceivedForward);
 }
 
 /* We pay the Iron Price. */
