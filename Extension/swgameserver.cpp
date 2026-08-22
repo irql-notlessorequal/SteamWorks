@@ -134,7 +134,7 @@ ISteamGameServer *SteamWorksGameServer::GetGameServer(void)
 		GetUserAndPipe(hSteamUser, hSteamPipe);
 		
 		const char *pVersion = STEAMGAMESERVER_INTERFACE_VERSION;
-		//GetGameSpecificConfigInterface("SteamGameServerInterfaceVersion", pVersion);
+		GetGameSpecificConfigInterface("SteamGameServerInterfaceVersion", pVersion);
 		this->m_pGameServer = this->GetSteamClient()->GetISteamGameServer(hSteamUser, hSteamPipe, pVersion);
 	}
 	
