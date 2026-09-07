@@ -5,6 +5,7 @@ on:
     branches: [ universal ]
   pull_request:
     branches: [ universal ]
+  workflow_dispatch: {}
   schedule:
     - cron: "30 0 1 */3 *"
 
