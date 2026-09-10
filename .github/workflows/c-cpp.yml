@@ -61,6 +61,7 @@ jobs:
       name: Clone Metamod Source
       with:
         repository: 'alliedmodders/metamod-source'
+        submodules: recursive
         ref: ${{ matrix.sm-version == '1.13-dev' && 'master' || matrix.sm-version }}
         path: 'assets/mmsource-central'
     - uses: actions/checkout@v6

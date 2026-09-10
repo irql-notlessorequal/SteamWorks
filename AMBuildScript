@@ -81,6 +81,18 @@ class SteamWorksConfig(object):
       raise Exception('Invalid SourceMod version format: {0}'.format(version))
     self.sm_version_major = parts[0]
     self.sm_version_minor = parts[1]
+
+    khook_hpp = os.path.join(self.mms_root, 'third_party', 'khook', 'include', 'khook.hpp')
+    mms_sourcehook = os.path.join(self.mms_root, 'core', 'sourcehook')
+    if os.path.isfile(khook_hpp):
+      self.use_khook = True
+    elif os.path.isdir(mms_sourcehook):
+      self.use_khook = False
+    else:
+      try:
+        self.use_khook = int(self.sm_version_minor) >= 13
+      except:
+        self.use_khook = False
 	
 	#STEAMWORKS
     if builder.options.steamworks_path:
@@ -239,6 +251,7 @@ class SteamWorksConfig(object):
       'SOURCEMOD_V_MAJOR={0}'.format(self.sm_version_major),
       'SOURCEMOD_V_MINOR={0}'.format(self.sm_version_minor),
     ]
+      
     compiler.includes += [
       os.path.join(context.currentSourcePath),
       os.path.join(context.currentSourcePath, 'sdk'),
@@ -252,10 +265,14 @@ class SteamWorksConfig(object):
       # Safetyhook, Zydis and CDetour are now submodules.
       os.path.join(self.sm_root, 'public', 'safetyhook', 'zydis'),
       os.path.join(self.sm_root, 'public', 'safetyhook', 'include'),
-
-      # required since September 2026 for MM:S
-      os.path.join(self.mms_root, 'third_party', 'khook', 'include')
     ]
+
+    if self.use_khook:
+      compiler.defines += ['STEAMWORKS_KHOOK']
+      compiler.includes += [
+        os.path.join(self.mms_root, 'third_party', 'khook', 'include')
+      ]
+
     return compiler
 	
   def ConfigureForHL2(self, binary):
@@ -263,10 +280,15 @@ class SteamWorksConfig(object):
 
     mms_path = os.path.join(self.mms_root, 'core')
 
-    compiler.cxxincludes += [
-      os.path.join(mms_path),
-      os.path.join(mms_path, 'sourcehook'),
-    ]
+    if self.use_khook:
+      compiler.cxxincludes += [
+        os.path.join(mms_path),
+      ]
+    else:
+      compiler.cxxincludes += [
+        os.path.join(mms_path),
+        os.path.join(mms_path, 'sourcehook'),
+      ]
 
     return binary
 	
