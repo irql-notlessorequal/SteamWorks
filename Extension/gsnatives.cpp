@@ -190,7 +190,7 @@ static cell_t sm_ClearRules(IPluginContext *pContext, const cell_t *params)
 	return 1;
 }
 
-static cell_t sm_ForceHeartbeat(IPluginContext *pContext, const cell_t *params)
+static cell_t sm_SetAdvertiseServerActive(IPluginContext *pContext, const cell_t *params)
 {
 	ISteamGameServer *pServer = GetGSPointer();
 
@@ -199,8 +199,14 @@ static cell_t sm_ForceHeartbeat(IPluginContext *pContext, const cell_t *params)
 		return 0;
 	}
 
-	//pServer->ForceHeartbeat();
+	pServer->SetAdvertiseServerActive(!!params[1]);
 	return 1;
+}
+
+static cell_t sm_ForceHeartbeat(IPluginContext *pContext, const cell_t *params)
+{
+	smutils->LogMessage(myself, "SteamWorks: ForceHeartbeat no longer has any functionality.");
+	return 0;
 }
 
 static cell_t sm_UserHasLicenseForApp(IPluginContext *pContext, const cell_t *params)
@@ -211,12 +217,17 @@ static cell_t sm_UserHasLicenseForApp(IPluginContext *pContext, const cell_t *pa
 	{
 		return k_EUserHasLicenseResultNoAuth;
 	}
-	
-	int client = gamehelpers->ReferenceToIndex(params[1]);
-	IGamePlayer *pPlayer = playerhelpers->GetGamePlayer(client); /* Man, including GameHelpers and PlayerHelpers for this native :(. */
-	if (pPlayer == NULL || pPlayer->IsConnected() == false)
+
+	int client = params[1];
+	if (client < 1 || client > playerhelpers->GetMaxClients())
 	{
-		return pContext->ThrowNativeError("Client index %d is invalid", params[1]);
+		return pContext->ThrowNativeError("Client index %d is invalid", client);
+	}
+
+	IGamePlayer *pPlayer = playerhelpers->GetGamePlayer(client);
+	if (pPlayer == NULL || !pPlayer->IsConnected())
+	{
+		return pContext->ThrowNativeError("Client index %d is not connected", client);
 	}
 	
 	CSteamID checkid = CreateCommonCSteamID(pPlayer, params, 3, 4);
@@ -238,12 +249,16 @@ static cell_t sm_UserHasLicenseForAppId(IPluginContext *pContext, const cell_t *
 
 static cell_t sm_GetClientSteamID(IPluginContext *pContext, const cell_t *params)
 {
-	int client = gamehelpers->ReferenceToIndex(params[1]);
-	IGamePlayer *pPlayer = playerhelpers->GetGamePlayer(client);
-
-	if (pPlayer == NULL || pPlayer->IsConnected() == false)
+	int client = params[1];
+	if (client < 1 || client > playerhelpers->GetMaxClients())
 	{
-		return pContext->ThrowNativeError("Client index %d is invalid", params[1]);
+		return pContext->ThrowNativeError("Client index %d is invalid", client);
+	}
+
+	IGamePlayer *pPlayer = playerhelpers->GetGamePlayer(client);
+	if (pPlayer == NULL || !pPlayer->IsConnected())
+	{
+		return pContext->ThrowNativeError("Client index %d is not connected", client);
 	}
 
 	CSteamID steamId = CreateCommonCSteamID(pPlayer, params, 4, 5);
@@ -263,14 +278,19 @@ static cell_t sm_GetUserGroupStatus(IPluginContext *pContext, const cell_t *para
 
 	if (pServer == NULL)
 	{
-		return false;
+		return 0;
 	}
 
-	int client = gamehelpers->ReferenceToIndex(params[1]);
-	IGamePlayer *pPlayer = playerhelpers->GetGamePlayer(client); /* Man, including GameHelpers and PlayerHelpers for this native :(. */
-	if (pPlayer == NULL || pPlayer->IsConnected() == false)
+	int client = params[1];
+	if (client < 1 || client > playerhelpers->GetMaxClients())
 	{
-		return pContext->ThrowNativeError("Client index %d is invalid", params[1]);
+		return pContext->ThrowNativeError("Client index %d is invalid", client);
+	}
+
+	IGamePlayer *pPlayer = playerhelpers->GetGamePlayer(client);
+	if (pPlayer == NULL || !pPlayer->IsConnected())
+	{
+		return pContext->ThrowNativeError("Client index %d is not connected", client);
 	}
 
 	CSteamID checkid = CreateCommonCSteamID(pPlayer, params, 3, 4);
@@ -301,6 +321,7 @@ static sp_nativeinfo_t gsnatives[] = {
 	{"SteamWorks_IsConnected",				sm_IsConnected},
 	{"SteamWorks_SetRule",						sm_SetRule},
 	{"SteamWorks_ClearRules",						sm_ClearRules},
+	{"SteamWorks_SetAdvertiseServerActive",	sm_SetAdvertiseServerActive},
 	{"SteamWorks_ForceHeartbeat",				sm_ForceHeartbeat},
 	{"SteamWorks_HasLicenseForApp",			sm_UserHasLicenseForApp},
 	{"SteamWorks_HasLicenseForAppId",			sm_UserHasLicenseForAppId},

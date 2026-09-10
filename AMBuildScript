@@ -1,24 +1,5 @@
 # vim: set sts=2 ts=8 sw=2 tw=99 et ft=python:
-import os, sys
-
-class SDK(object):
-  def __init__(self, sdk, ext, aDef, name, platform, dir):
-    self.folder = 'hl2sdk-' + dir
-    self.envvar = sdk
-    self.ext = ext
-    self.code = aDef
-    self.define = name
-    self.platform = platform
-    self.name = dir
-    self.path = None # Actual path
-
-WinOnly = ['windows']
-WinLinux = ['windows', 'linux']
-WinLinuxMac = ['windows', 'linux', 'mac']
-
-PossibleSDKs = {
-  'sdk2013': SDK('HL2SDK2013', '2.sdk2013', '9', 'SDK2013', WinLinuxMac, 'sdk2013'),
-}
+import os
 
 def ResolveEnvPath(env, folder):
   if env in os.environ:
@@ -43,7 +24,6 @@ def Normalize(path):
 
 class SteamWorksConfig(object):
   def __init__(self):
-    self.sdks = {}
     self.binaries = []
     self.mms_root = None
     self.sm_root = None
@@ -62,29 +42,7 @@ class SteamWorksConfig(object):
       return 'Debug'
     return 'Release'
 
-  def detectSDKs(self):
-    sdk_list = builder.options.sdks.split(',')
-    use_all = sdk_list[0] == 'all'
-    use_present = sdk_list[0] == 'present'
-
-    for sdk_name in PossibleSDKs:
-      sdk = PossibleSDKs[sdk_name]
-      if builder.cxx.target.platform in sdk.platform:
-        if builder.options.hl2sdk_root:
-          sdk_path = os.path.join(builder.options.hl2sdk_root, sdk.folder)
-        else:
-          sdk_path = ResolveEnvPath(sdk.envvar, sdk.folder)
-        if sdk_path is None or not os.path.isdir(sdk_path):
-          if use_all or sdk_name in sdk_list:
-            raise Exception('Could not find a valid path for {0}'.format(sdk.envvar))
-          continue
-        if use_all or use_present or sdk_name in sdk_list:
-          sdk.path = Normalize(sdk_path)
-          self.sdks[sdk_name] = sdk
-
-    if len(self.sdks) < 1:
-      raise Exception('At least one SDK must be available.')
-
+  def detectDeps(self):
     #METAMOD:SOURCE
     if builder.options.mms_path:
       self.mms_root = builder.options.mms_path
@@ -123,6 +81,18 @@ class SteamWorksConfig(object):
       raise Exception('Invalid SourceMod version format: {0}'.format(version))
     self.sm_version_major = parts[0]
     self.sm_version_minor = parts[1]
+
+    khook_hpp = os.path.join(self.mms_root, 'third_party', 'khook', 'include', 'khook.hpp')
+    mms_sourcehook = os.path.join(self.mms_root, 'core', 'sourcehook')
+    if os.path.isfile(khook_hpp):
+      self.use_khook = True
+    elif os.path.isdir(mms_sourcehook):
+      self.use_khook = False
+    else:
+      try:
+        self.use_khook = int(self.sm_version_minor) >= 13
+      except:
+        self.use_khook = False
 	
 	#STEAMWORKS
     if builder.options.steamworks_path:
@@ -164,15 +134,23 @@ class SteamWorksConfig(object):
         '-Wno-format',
         '-Wno-format-security',
         '-Wno-array-bounds',
-        '-msse',
         '-fPIC',
       ]
       cxx.cxxflags += [
           '-std=c++20',
       ]
 
-      have_gcc = cxx.vendor == 'gcc'
-      have_clang = cxx.vendor == 'clang'
+      if cxx.target.arch == 'x86':
+        cxx.cflags += ['-msse', '-m32']
+        cxx.linkflags += ['-m32']
+        if cxx.family == 'gcc':
+          cxx.cflags += ['-mfpmath=sse']
+      elif cxx.target.arch == 'x86_64':
+        cxx.cflags += ['-m64']
+        cxx.linkflags += ['-m64']
+
+      have_gcc = cxx.family == 'gcc'
+      have_clang = cxx.family == 'clang'
       if have_clang or (have_gcc and cxx.version >= '4'):
         cxx.cflags += ['-fvisibility=hidden']
         cxx.cxxflags += ['-fvisibility-inlines-hidden']
@@ -197,9 +175,7 @@ class SteamWorksConfig(object):
         '-Wno-overloaded-virtual',
       ]
 
-      if have_gcc:
-        cxx.cflags += ['-mfpmath=sse']
-    elif cxx.vendor == 'msvc':
+    elif cxx.like('msvc'):
       if builder.options.debug == '1':
         cxx.cflags += ['/MTd']
         cxx.linkflags += ['/NODEFAULTLIB:libcmt']
@@ -218,9 +194,10 @@ class SteamWorksConfig(object):
         '/EHsc',
         '/GR-',
         '/TP',
+        '/std:c++17',
       ]
       cxx.linkflags += [
-        '/MACHINE:X86',
+        '/MACHINE:X64' if cxx.target.arch == 'x86_64' else '/MACHINE:X86',
         '/SUBSYSTEM:WINDOWS',
         'kernel32.lib',
         'user32.lib',
@@ -254,27 +231,18 @@ class SteamWorksConfig(object):
           cxx.cflags += ['/d2Zi+']
 
     # This needs to be after our optimization flags which could otherwise disable it.
-    if cxx.vendor == 'msvc':
+    if cxx.like('msvc'):
       # Don't omit the frame pointer.
       cxx.cflags += ['/Oy-']
 
     # Platform-specifics
     if cxx.target.platform == 'linux':
       cxx.defines += ['_LINUX', 'POSIX']
-      if cxx.vendor == 'gcc':
+      if cxx.family == 'gcc':
         cxx.linkflags += ['-static-libgcc']
-      elif cxx.vendor == 'clang':
+      elif cxx.family == 'clang':
         cxx.linkflags += ['-lgcc_eh']
-    elif cxx.target.platform == 'mac':
-      cxx.defines += ['OSX', '_OSX', 'POSIX']
-      cxx.cflags += ['-mmacosx-version-min=10.5']
-      cxx.linkflags += [
-        '-mmacosx-version-min=10.5',
-        '-arch', 'i386',
-        '-static',
-        '-stdlib=libc++'
-      ]
-      cxx.cxxflags += ['-stdlib=libstdc++']
+      cxx.linkflags += ['-static-libstdc++']
     elif cxx.target.platform == 'windows':
       cxx.defines += ['WIN32', '_WINDOWS']
 	  
@@ -283,6 +251,7 @@ class SteamWorksConfig(object):
       'SOURCEMOD_V_MAJOR={0}'.format(self.sm_version_major),
       'SOURCEMOD_V_MINOR={0}'.format(self.sm_version_minor),
     ]
+      
     compiler.includes += [
       os.path.join(context.currentSourcePath),
       os.path.join(context.currentSourcePath, 'sdk'),
@@ -290,54 +259,50 @@ class SteamWorksConfig(object):
       os.path.join(self.sm_root, 'public'),
       os.path.join(self.sm_root, 'public', 'extensions'),
       os.path.join(self.sm_root, 'sourcepawn', 'include'),
-      os.path.join(self.sm_root, 'public', 'amtl'),
       os.path.join(self.sm_root, 'public', 'amtl', 'amtl'),
+      os.path.join(self.sm_root, 'public', 'amtl'),
 
       # Safetyhook, Zydis and CDetour are now submodules.
       os.path.join(self.sm_root, 'public', 'safetyhook', 'zydis'),
-      os.path.join(self.sm_root, 'public', 'safetyhook', 'include')
+      os.path.join(self.sm_root, 'public', 'safetyhook', 'include'),
     ]
+
+    if self.use_khook:
+      compiler.defines += ['STEAMWORKS_KHOOK']
+      compiler.includes += [
+        os.path.join(self.mms_root, 'third_party', 'khook', 'include')
+      ]
+
     return compiler
 	
-  def ConfigureForHL2(self, binary, sdk):
+  def ConfigureForHL2(self, binary):
     compiler = binary.compiler
 
-    if sdk.name == 'episode1':
-      mms_path = os.path.join(self.mms_root, 'core-legacy')
+    mms_path = os.path.join(self.mms_root, 'core')
+
+    if self.use_khook:
+      compiler.cxxincludes += [
+        os.path.join(mms_path),
+      ]
     else:
-      mms_path = os.path.join(self.mms_root, 'core')
-
-    compiler.cxxincludes += [
-      os.path.join(mms_path),
-      os.path.join(mms_path, 'sourcehook'),
-    ]
-
-    defines = ['SE_' + PossibleSDKs[i].define + '=' + PossibleSDKs[i].code for i in PossibleSDKs]
-    compiler.defines += defines
-
-    if compiler.like('msvc'):
-      compiler.defines += ['COMPILER_MSVC', 'COMPILER_MSVC32']
-    else:
-      compiler.defines += ['COMPILER_GCC']
+      compiler.cxxincludes += [
+        os.path.join(mms_path),
+        os.path.join(mms_path, 'sourcehook'),
+      ]
 
     return binary
-
-  def HL2Library(self, context, name, sdk):
-    binary = context.compiler.Library(name)
-    self.ConfigureForExtension(context, binary.compiler)
-    return self.ConfigureForHL2(binary, sdk)
 	
   def HL2Project(self, context, name):
     project = context.LibraryProject(name)
     self.ConfigureForExtension(context, context.cxx)
     return project
 
-  def HL2Config(self, project, cxx, name, sdk):
-    binary = project.Configure(cxx, name, '{0} - {1}'.format(self.tag, sdk.name))
-    return self.ConfigureForHL2(binary, sdk)
+  def HL2Config(self, project, cxx, name):
+    binary = project.Configure(cxx, name, '{0}'.format(self.tag))
+    return self.ConfigureForHL2(binary)
 
 SteamWorks = SteamWorksConfig()
-SteamWorks.detectSDKs()
+SteamWorks.detectDeps()
 SteamWorks.configure()
 
 BuildScripts = ['Extension/AMBuilder']

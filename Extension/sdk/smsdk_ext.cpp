@@ -304,7 +304,11 @@ void SDKExtension::SDK_OnDependenciesDropped()
 
 PluginId g_PLID = 0;						/**< Metamod plugin ID */
 ISmmPlugin *g_PLAPI = NULL;					/**< Metamod plugin API */
+#if defined(STEAMWORKS_KHOOK)
+namespace KHook { IKHook * __exported__khook = nullptr; }
+#else
 SourceHook::ISourceHook *g_SHPtr = NULL;	/**< SourceHook pointer */
+#endif
 ISmmAPI *g_SMAPI = NULL;					/**< SourceMM API pointer */
 #ifndef META_NO_HL2SDK
 IVEngineServer *engine = NULL;				/**< IVEngineServer pointer */

@@ -1,13 +1,18 @@
-# vim: set ts=8 sts=2 sw=2 tw=99 et ft=python: 
+# vim: set ts=8 sts=2 sw=2 tw=99 et ft=python:
 import os
 
 builder.SetBuildFolder('package')
 
-arch = 'x64' if builder.cxx.target.arch == 'x86_64' else ''
+# 64-bit extensions live under an x64/ subfolder; 32-bit sit directly in
+# extensions/. Only one architecture is built per configure, so pick the
+# matching destination here.
+if builder.cxx.target.arch == 'x86_64':
+  ext_folder = 'addons/sourcemod/extensions/x64'
+else:
+  ext_folder = 'addons/sourcemod/extensions'
 
 folder_list = [
-  f'addons/sourcemod/extensions{("/" + arch) if arch else ""}',
-  'addons/sourcemod/scripting',
+  ext_folder,
   'addons/sourcemod/scripting/include',
 ]
 
@@ -18,7 +23,7 @@ for folder in folder_list:
   folder_map[folder] = builder.AddFolder(norm_folder)
 
 for extension in SteamWorks.extensions:
-  builder.AddCopy(extension.binary, folder_map[f'addons/sourcemod/extensions{("/" + arch) if arch else ""}'])
+  builder.AddCopy(extension.binary, folder_map[ext_folder])
 
 # Do all straight-up file copies from the source tree.
 def CopyFiles(src, dest, files):
@@ -29,5 +34,4 @@ def CopyFiles(src, dest, files):
     source_path = os.path.join(builder.sourcePath, src, source_file)
     builder.AddCopy(source_path, dest_entry)
 
-CopyFiles('Pawn', 'addons/sourcemod/scripting', ['swag.sp'])
 CopyFiles('Pawn/includes', 'addons/sourcemod/scripting/include', ['SteamWorks.inc'])

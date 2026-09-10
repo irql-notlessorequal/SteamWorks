@@ -58,15 +58,10 @@ jobs:
         path: 'assets/SteamworksSDK'
         token: ${{ secrets.STEAMWORKS_SDK_OAUTH }}
     - uses: actions/checkout@v6
-      name: Clone hl2sdk-sdk2013
-      with:
-        repository: 'alliedmodders/hl2sdk'
-        ref: 'sdk2013'
-        path: 'assets/hl2sdk-sdk2013'
-    - uses: actions/checkout@v6
       name: Clone Metamod Source
       with:
         repository: 'alliedmodders/metamod-source'
+        submodules: recursive
         ref: ${{ matrix.sm-version == '1.13-dev' && 'master' || matrix.sm-version }}
         path: 'assets/mmsource-central'
     - uses: actions/checkout@v6

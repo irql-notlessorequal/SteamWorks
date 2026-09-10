@@ -20,6 +20,15 @@
 
 #include <cstdio>
 
+/* SourceMod 1.13 (extension API 9) changed IPluginManager::FindPluginByContext()
+   to take an IPluginContext* directly; older SM (API 8) takes the low-level
+   sp_context_t* from IPluginContext::GetContext(). */
+#if SMINTERFACE_EXTENSIONAPI_VERSION >= 9
+#define SW_PLUGIN_CTX(ctx) (ctx)
+#else
+#define SW_PLUGIN_CTX(ctx) ((ctx)->GetContext())
+#endif
+
 static ISteamHTTP *GetHTTPPointer(void)
 {
 	return g_SteamWorks.pSWGameServer->GetHTTP();
@@ -61,12 +70,10 @@ static SteamWorksHTTPRequest *GetRequestPointer(ISteamHTTP *&pHTTP, IPluginConte
 	return pRequest;
 }
 
-SteamWorksHTTPRequest::SteamWorksHTTPRequest()
+SteamWorksHTTPRequest::SteamWorksHTTPRequest() 
 	: request(INVALID_HTTPREQUEST_HANDLE),
 	  handle(BAD_HANDLE),
 	  CompletedCallResult(),
-	  m_HeadersCallback(this, &SteamWorksHTTPRequest::OnHTTPHeadersReceived),
-	  m_DataCallback(this, &SteamWorksHTTPRequest::OnHTTPDataReceived),
 	  pCompletedForward(NULL),
 	  pHeadersReceivedForward(NULL),
 	  pDataReceivedForward(NULL)
@@ -75,6 +82,14 @@ SteamWorksHTTPRequest::SteamWorksHTTPRequest()
 
 SteamWorksHTTPRequest::~SteamWorksHTTPRequest()
 {
+	/* Requests are freed via a frame action, so on extension unload this can run
+	   after the dispatcher itself has been torn down; pSWHTTP is nulled in that
+	   case (see SDK_OnUnload), so guard against it. */
+	if (g_SteamWorks.pSWHTTP != NULL)
+	{
+		g_SteamWorks.pSWHTTP->UnregisterRequest(this);
+	}
+
 	ISteamHTTP *pHTTP = GetHTTPPointer();
 	if (pHTTP != NULL)
 	{
@@ -104,20 +119,18 @@ void SteamWorksHTTPRequest::OnHTTPRequestCompleted(HTTPRequestCompleted_t *pRequ
 	this->pCompletedForward->Execute(NULL);
 }
 
+/* Streaming header/data notifications are success-only callbacks (unlike the
+   completion call result, they carry no IO-failure flag), so bFailure is always
+   false here. Failures still surface through the completion callback. */
 void SteamWorksHTTPRequest::OnHTTPHeadersReceived(HTTPRequestHeadersReceived_t *pRequest)
 {
-	if (pRequest->m_hRequest != this->request)
-	{
-		return;
-	}
-
 	if (this->pHeadersReceivedForward == NULL || this->pHeadersReceivedForward->GetFunctionCount() == 0)
 	{
 		return;
 	}
 
 	this->pHeadersReceivedForward->PushCell(this->handle);
-	this->pHeadersReceivedForward->PushCell(0);
+	this->pHeadersReceivedForward->PushCell(false);
 	this->pHeadersReceivedForward->PushCell(pRequest->m_ulContextValue >> 32);
 	this->pHeadersReceivedForward->PushCell((pRequest->m_ulContextValue & 0x00000000FFFFFFFF));
 	this->pHeadersReceivedForward->Execute(NULL);
@@ -125,18 +138,13 @@ void SteamWorksHTTPRequest::OnHTTPHeadersReceived(HTTPRequestHeadersReceived_t *
 
 void SteamWorksHTTPRequest::OnHTTPDataReceived(HTTPRequestDataReceived_t *pRequest)
 {
-	if (pRequest->m_hRequest != this->request)
-	{
-		return;
-	}
-
 	if (this->pDataReceivedForward == NULL || this->pDataReceivedForward->GetFunctionCount() == 0)
 	{
 		return;
 	}
 
 	this->pDataReceivedForward->PushCell(this->handle);
-	this->pDataReceivedForward->PushCell(0);
+	this->pDataReceivedForward->PushCell(false);
 	this->pDataReceivedForward->PushCell(pRequest->m_cOffset);
 	this->pDataReceivedForward->PushCell(pRequest->m_cBytesReceived);
 	this->pDataReceivedForward->PushCell(pRequest->m_ulContextValue >> 32);
@@ -172,7 +180,9 @@ static cell_t sm_CreateHTTPRequest(IPluginContext *pContext, const cell_t *param
 
 	pRequest->request = request;
 	pRequest->handle = handle;
-	
+
+	g_SteamWorks.pSWHTTP->RegisterRequest(pRequest);
+
 	return handle;
 }
 
@@ -242,11 +252,7 @@ static cell_t sm_SetCallbacks(IPluginContext *pContext, const cell_t *params)
 	IPlugin *pPlugin;
 	if (params[5] == BAD_HANDLE)
 	{
-#if SOURCEMOD_V_MAJOR >= 1 && SOURCEMOD_V_MINOR >= 13
-		pPlugin = plsys->FindPluginByContext(pContext);
-#else
-		pPlugin = plsys->FindPluginByContext(pContext->GetContext());
-#endif
+		pPlugin = plsys->FindPluginByContext(SW_PLUGIN_CTX(pContext));
 	} else {
 		HandleError err;
 		pPlugin = plsys->PluginFromHandle(params[5], &err);
@@ -313,6 +319,9 @@ static cell_t sm_SetCallbacks(IPluginContext *pContext, const cell_t *params)
 
 static void SetCallbacks(SteamAPICall_t &hCall, SteamWorksHTTPRequest *pRequest)
 {
+	/* Only completion is a call result of this send. Header/data streaming
+	   notifications are delivered as broadcast callbacks and routed to the request
+	   by SteamWorksHTTP's dispatcher, so there is nothing to bind to hCall here. */
 	if (pRequest->pCompletedForward != NULL)
 	{
 		pRequest->CompletedCallResult.SetGameserverFlag();
@@ -532,11 +541,7 @@ static cell_t sm_GetHTTPResponseBodyCallback(IPluginContext *pContext, const cel
 	IPlugin *pPlugin;
 	if (params[4] == BAD_HANDLE)
 	{
-#if SOURCEMOD_V_MAJOR >= 1 && SOURCEMOD_V_MINOR >= 13
-		pPlugin = plsys->FindPluginByContext(pContext);
-#else
-		pPlugin = plsys->FindPluginByContext(pContext->GetContext());
-#endif
+		pPlugin = plsys->FindPluginByContext(SW_PLUGIN_CTX(pContext));
 	} else {
 		HandleError err;
 		pPlugin = plsys->PluginFromHandle(params[4], &err);
@@ -715,6 +720,35 @@ static sp_nativeinfo_t httpnatives[] = {
 	{"SteamWorks_WriteHTTPResponseBodyToFile",				sm_WriteHTTPResponseBodyToFile},
 	{"SteamWorks_SendHTTPRequestAndStreamResponse",			sm_SendHTTPRequestAndStreamResponse},
 	{"SteamWorks_GetHTTPStreamingResponseBodyData",			sm_GetHTTPStreamingResponseBodyData},
+
+	/* SteamWorksHTTPRequest methodmap. These reuse the functions above; the implicit
+	   `this` handle arrives as params[1], exactly like the hHandle/hRequest first
+	   parameter of the free-function natives (and the constructor maps to the create
+	   native, whose first argument is likewise params[1]). */
+	{"SteamWorksHTTPRequest.SteamWorksHTTPRequest",			sm_CreateHTTPRequest},
+	{"SteamWorksHTTPRequest.SetContextValue",				sm_SetHTTPRequestContextValue},
+	{"SteamWorksHTTPRequest.SetNetworkActivityTimeout",		sm_SetHTTPRequestNetworkActivityTimeout},
+	{"SteamWorksHTTPRequest.SetHeaderValue",				sm_SetHTTPRequestHeaderValue},
+	{"SteamWorksHTTPRequest.SetGetOrPostParameter",			sm_SetHTTPRequestGetOrPostParameter},
+	{"SteamWorksHTTPRequest.SetUserAgentInfo",				sm_SetHTTPRequestUserAgentInfo},
+	{"SteamWorksHTTPRequest.SetRequiresVerifiedCertificate",	sm_SetHTTPRequestRequiresVerifiedCertificate},
+	{"SteamWorksHTTPRequest.SetAbsoluteTimeoutMS",			sm_SetHTTPRequestAbsoluteTimeoutMS},
+	{"SteamWorksHTTPRequest.SetCallbacks",					sm_SetCallbacks},
+	{"SteamWorksHTTPRequest.Send",							sm_SendHTTPRequest},
+	{"SteamWorksHTTPRequest.SendAndStreamResponse",			sm_SendHTTPRequestAndStreamResponse},
+	{"SteamWorksHTTPRequest.Defer",							sm_DeferHTTPRequest},
+	{"SteamWorksHTTPRequest.Prioritize",					sm_PrioritizeHTTPRequest},
+	{"SteamWorksHTTPRequest.GetResponseHeaderSize",			sm_GetHTTPResponseHeaderSize},
+	{"SteamWorksHTTPRequest.GetResponseHeaderValue",		sm_GetHTTPResponseHeaderValue},
+	{"SteamWorksHTTPRequest.GetResponseBodySize",			sm_GetHTTPResponseBodySize},
+	{"SteamWorksHTTPRequest.GetResponseBodyData",			sm_GetHTTPResponseBodyData},
+	{"SteamWorksHTTPRequest.GetStreamingResponseBodyData",	sm_GetHTTPStreamingResponseBodyData},
+	{"SteamWorksHTTPRequest.GetDownloadProgressPct",		sm_GetHTTPDownloadProgressPct},
+	{"SteamWorksHTTPRequest.GetWasTimedOut",				sm_GetHTTPRequestWasTimedOut},
+	{"SteamWorksHTTPRequest.SetRawPostBody",				sm_SetHTTPRequestRawPostBody},
+	{"SteamWorksHTTPRequest.SetRawPostBodyFromFile",		sm_SetHTTPRequestRawPostBodyFromFile},
+	{"SteamWorksHTTPRequest.GetResponseBodyCallback",		sm_GetHTTPResponseBodyCallback},
+	{"SteamWorksHTTPRequest.WriteResponseBodyToFile",		sm_WriteHTTPResponseBodyToFile},
 	{NULL,											NULL}
 };
 
