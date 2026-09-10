@@ -70,12 +70,10 @@ static SteamWorksHTTPRequest *GetRequestPointer(ISteamHTTP *&pHTTP, IPluginConte
 	return pRequest;
 }
 
-SteamWorksHTTPRequest::SteamWorksHTTPRequest()
+SteamWorksHTTPRequest::SteamWorksHTTPRequest() 
 	: request(INVALID_HTTPREQUEST_HANDLE),
 	  handle(BAD_HANDLE),
 	  CompletedCallResult(),
-	  m_HeadersCallback(this, &SteamWorksHTTPRequest::OnHTTPHeadersReceived),
-	  m_DataCallback(this, &SteamWorksHTTPRequest::OnHTTPDataReceived),
 	  pCompletedForward(NULL),
 	  pHeadersReceivedForward(NULL),
 	  pDataReceivedForward(NULL)
@@ -113,39 +111,29 @@ void SteamWorksHTTPRequest::OnHTTPRequestCompleted(HTTPRequestCompleted_t *pRequ
 	this->pCompletedForward->Execute(NULL);
 }
 
-void SteamWorksHTTPRequest::OnHTTPHeadersReceived(HTTPRequestHeadersReceived_t *pRequest)
+void SteamWorksHTTPRequest::OnHTTPHeadersReceived(HTTPRequestHeadersReceived_t *pRequest, bool bFailed)
 {
-	if (pRequest->m_hRequest != this->request)
-	{
-		return;
-	}
-
 	if (this->pHeadersReceivedForward == NULL || this->pHeadersReceivedForward->GetFunctionCount() == 0)
 	{
 		return;
 	}
 
 	this->pHeadersReceivedForward->PushCell(this->handle);
-	this->pHeadersReceivedForward->PushCell(0);
+	this->pHeadersReceivedForward->PushCell(bFailed);
 	this->pHeadersReceivedForward->PushCell(pRequest->m_ulContextValue >> 32);
 	this->pHeadersReceivedForward->PushCell((pRequest->m_ulContextValue & 0x00000000FFFFFFFF));
 	this->pHeadersReceivedForward->Execute(NULL);
 }
 
-void SteamWorksHTTPRequest::OnHTTPDataReceived(HTTPRequestDataReceived_t *pRequest)
+void SteamWorksHTTPRequest::OnHTTPDataReceived(HTTPRequestDataReceived_t *pRequest, bool bFailed)
 {
-	if (pRequest->m_hRequest != this->request)
-	{
-		return;
-	}
-
 	if (this->pDataReceivedForward == NULL || this->pDataReceivedForward->GetFunctionCount() == 0)
 	{
 		return;
 	}
 
 	this->pDataReceivedForward->PushCell(this->handle);
-	this->pDataReceivedForward->PushCell(0);
+	this->pDataReceivedForward->PushCell(bFailed);
 	this->pDataReceivedForward->PushCell(pRequest->m_cOffset);
 	this->pDataReceivedForward->PushCell(pRequest->m_cBytesReceived);
 	this->pDataReceivedForward->PushCell(pRequest->m_ulContextValue >> 32);
@@ -322,6 +310,18 @@ static void SetCallbacks(SteamAPICall_t &hCall, SteamWorksHTTPRequest *pRequest)
 	{
 		pRequest->CompletedCallResult.SetGameserverFlag();
 		pRequest->CompletedCallResult.Set(hCall, pRequest, &SteamWorksHTTPRequest::OnHTTPRequestCompleted);
+	}
+
+	if (pRequest->pHeadersReceivedForward != NULL)
+	{
+		pRequest->HeadersCallResult.SetGameserverFlag();
+		pRequest->HeadersCallResult.Set(hCall, pRequest, &SteamWorksHTTPRequest::OnHTTPHeadersReceived);
+	}
+
+	if (pRequest->pDataReceivedForward != NULL)
+	{
+		pRequest->DataCallResult.SetGameserverFlag();
+		pRequest->DataCallResult.Set(hCall, pRequest, &SteamWorksHTTPRequest::OnHTTPDataReceived);
 	}
 }
 
