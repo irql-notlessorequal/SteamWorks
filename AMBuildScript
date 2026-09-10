@@ -295,7 +295,10 @@ class SteamWorksConfig(object):
 
       # Safetyhook, Zydis and CDetour are now submodules.
       os.path.join(self.sm_root, 'public', 'safetyhook', 'zydis'),
-      os.path.join(self.sm_root, 'public', 'safetyhook', 'include')
+      os.path.join(self.sm_root, 'public', 'safetyhook', 'include'),
+
+      # required since September 2026 for MM:S
+      os.path.join(self.mms_root, 'third_party', 'khook', 'include')
     ]
     return compiler
 	
