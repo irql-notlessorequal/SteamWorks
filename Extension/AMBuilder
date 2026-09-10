@@ -67,6 +67,7 @@ project.sources += [
 # check the build script for more details.
   'zydis/Zydis.c',
   'amalgamated-dist/safetyhook.cpp',
+  'CDetour/detours.cpp',
 ]
 
 binary = SteamWorks.HL2Config(project, builder.cxx, 'SteamWorks.ext')
