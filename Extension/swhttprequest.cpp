@@ -20,6 +20,15 @@
 
 #include <cstdio>
 
+/* SourceMod 1.13 (extension API 9) changed IPluginManager::FindPluginByContext()
+   to take an IPluginContext* directly; older SM (API 8) takes the low-level
+   sp_context_t* from IPluginContext::GetContext(). */
+#if SMINTERFACE_EXTENSIONAPI_VERSION >= 9
+#define SW_PLUGIN_CTX(ctx) (ctx)
+#else
+#define SW_PLUGIN_CTX(ctx) ((ctx)->GetContext())
+#endif
+
 static ISteamHTTP *GetHTTPPointer(void)
 {
 	return g_SteamWorks.pSWGameServer->GetHTTP();
@@ -242,11 +251,7 @@ static cell_t sm_SetCallbacks(IPluginContext *pContext, const cell_t *params)
 	IPlugin *pPlugin;
 	if (params[5] == BAD_HANDLE)
 	{
-#if SOURCEMOD_V_MAJOR >= 1 && SOURCEMOD_V_MINOR >= 13
-		pPlugin = plsys->FindPluginByContext(pContext);
-#else
-		pPlugin = plsys->FindPluginByContext(pContext->GetContext());
-#endif
+		pPlugin = plsys->FindPluginByContext(SW_PLUGIN_CTX(pContext));
 	} else {
 		HandleError err;
 		pPlugin = plsys->PluginFromHandle(params[5], &err);
@@ -532,11 +537,7 @@ static cell_t sm_GetHTTPResponseBodyCallback(IPluginContext *pContext, const cel
 	IPlugin *pPlugin;
 	if (params[4] == BAD_HANDLE)
 	{
-#if SOURCEMOD_V_MAJOR >= 1 && SOURCEMOD_V_MINOR >= 13
-		pPlugin = plsys->FindPluginByContext(pContext);
-#else
-		pPlugin = plsys->FindPluginByContext(pContext->GetContext());
-#endif
+		pPlugin = plsys->FindPluginByContext(SW_PLUGIN_CTX(pContext));
 	} else {
 		HandleError err;
 		pPlugin = plsys->PluginFromHandle(params[4], &err);
