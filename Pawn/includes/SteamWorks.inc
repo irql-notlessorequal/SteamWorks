@@ -222,6 +222,7 @@ native bool:SteamWorks_SetMapName(const String:sMapName[]);
 native bool:SteamWorks_IsConnected();
 native bool:SteamWorks_SetRule(const String:sKey[], const String:sValue[]);
 native bool:SteamWorks_ClearRules();
+#pragma deprecated This function is deprecated in the SDK and no longer does anything in this extension
 native bool:SteamWorks_ForceHeartbeat();
 native bool:SteamWorks_GetUserGroupStatus(client, groupid);
 native bool:SteamWorks_GetUserGroupStatusAuthID(authid, groupid);

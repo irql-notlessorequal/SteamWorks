@@ -1,6 +1,52 @@
 # vim: set sts=2 ts=8 sw=2 tw=99 et ft=python:
 import os
 
+# --- SafetyHook -----------------------------------------------------------------
+# The extension's detours use SourceMod's safetyhook-based CDetour, which handles
+# both x86 and x86_64, replacing the old x86-only asm trampolines. Build safetyhook
+# as a static library straight out of the SourceMod tree.
+sh_root = os.path.join(SteamWorks.sm_root, 'public', 'safetyhook')
+
+libsafetyhook = builder.StaticLibraryProject('safetyhook')
+libsafetyhook.sources += [
+  os.path.join(sh_root, 'src', 'allocator.cpp'),
+  os.path.join(sh_root, 'src', 'easy.cpp'),
+  os.path.join(sh_root, 'src', 'inline_hook.cpp'),
+  os.path.join(sh_root, 'src', 'mid_hook.cpp'),
+  os.path.join(sh_root, 'src', 'utility.cpp'),
+  os.path.join(sh_root, 'src', 'vmt_hook.cpp'),
+  os.path.join(sh_root, 'zydis', 'Zydis.c'),
+]
+
+sh_binary = libsafetyhook.Configure(builder.cxx, 'safetyhook',
+                                    'Release - {0}'.format(builder.cxx.target.arch))
+sh_cxx = sh_binary.compiler
+# safetyhook is third-party; compile it with its own flag set.
+sh_cxx.cxxflags = []
+sh_cxx.cflags = []
+sh_cxx.defines = []
+sh_cxx.includes = []
+sh_cxx.cxxincludes = []
+
+if builder.options.debug != '1':
+  sh_cxx.defines += ['NDEBUG']
+
+if sh_cxx.target.platform == 'windows':
+  sh_cxx.cflags += ['/W4']
+  sh_cxx.cflags += ['/MTd' if builder.options.debug == '1' else '/MT']
+  sh_cxx.cxxflags += ['/EHsc', '/permissive-', '/std:c++17']
+  sh_binary.sources += [os.path.join(sh_root, 'src', 'os.windows.cpp')]
+elif sh_cxx.target.platform == 'linux':
+  sh_cxx.cflags += ['-fPIC', '-Wall', '-Wno-unused-function', '-Wno-unused-const-variable']
+  sh_cxx.cflags += ['-m64' if sh_cxx.target.arch == 'x86_64' else '-m32']
+  sh_cxx.cxxflags += ['-std=c++17', '-Wno-format']
+  sh_binary.sources += [os.path.join(sh_root, 'src', 'os.linux.cpp')]
+
+sh_cxx.includes += [os.path.join(sh_root, 'include'), os.path.join(sh_root, 'zydis')]
+safetyhook_tasks = builder.Add(libsafetyhook)
+
+# --- SteamWorks extension -------------------------------------------------------
+
 project = SteamWorks.HL2Project(builder, 'SteamWorks.ext')
 project.sources += [
   'extension.cpp',
@@ -21,32 +67,35 @@ project.sources += [
 # check the build script for more details.
   'zydis/Zydis.c',
   'amalgamated-dist/safetyhook.cpp',
-  'CDetour/detours.cpp',
 ]
 
-for sdk_name in SteamWorks.sdks:
-  sdk = SteamWorks.sdks[sdk_name]
+binary = SteamWorks.HL2Config(project, builder.cxx, 'SteamWorks.ext')
 
-  binary = SteamWorks.HL2Config(project, builder.cxx, 'SteamWorks.ext', sdk)
-  
-  binary.compiler.defines += ['META_NO_HL2SDK', 'SOURCEMOD_BUILD', 'VERSION_SAFE_STEAM_API_INTERFACES']
-  binary.compiler.cxxincludes += [os.path.join(SteamWorks.steamworks_root, 'public', 'steam'), os.path.join(sdk.path, 'public', 'steam')];
-  
-  if binary.compiler.target.platform == 'linux':
-    if binary.compiler.target.arch == 'x86_64':
-      binary.compiler.postlink += os.path.join(SteamWorks.steamworks_root, 'redistributable_bin', 'linux64', 'libsteam_api.so'),;  
-    else:
-      binary.compiler.postlink += os.path.join(SteamWorks.steamworks_root, 'redistributable_bin', 'linux32', 'libsteam_api.so'),;
-	
-  if binary.compiler.target.platform == 'windows':
-    binary.compiler.cxxflags += [ '/std:c++20', '/EHsc' ]
+# The Steam API headers all come from the SteamWorks SDK; the extension is built
+# with META_NO_HL2SDK, so no HL2SDK is required.
+binary.compiler.defines += ['META_NO_HL2SDK', 'SOURCEMOD_BUILD', 'VERSION_SAFE_STEAM_API_INTERFACES']
+binary.compiler.cxxincludes += [os.path.join(SteamWorks.steamworks_root, 'public', 'steam')]
+binary.compiler.cxxincludes += [os.path.join(SteamWorks.sm_root, 'public', 'safetyhook', 'include')]
 
-    if binary.compiler.target.arch == 'x86_64':
-      binary.compiler.postlink += os.path.join(SteamWorks.steamworks_root, 'redistributable_bin', 'win64', 'steam_api64.lib'),;
-    else:
-      binary.compiler.postlink += os.path.join(SteamWorks.steamworks_root, 'redistributable_bin', 'steam_api.lib'),;
-	
-  if binary.compiler.target.platform == 'mac':
-    binary.compiler.postlink += os.path.join(SteamWorks.steamworks_root, 'redistributable_bin', 'osx', 'libsteam_api.dylib'),;
+# Link the matching-arch safetyhook static library.
+for task in safetyhook_tasks:
+  if task.target.arch == binary.compiler.target.arch:
+    binary.compiler.linkflags += [task.binary]
+    break
+
+steamworks_bin = os.path.join(SteamWorks.steamworks_root, 'redistributable_bin')
+arch = binary.compiler.target.arch
+
+if binary.compiler.target.platform == 'linux':
+  if arch == 'x86_64':
+    binary.compiler.postlink += [os.path.join(steamworks_bin, 'linux64', 'libsteam_api.so')]
+  else:
+    binary.compiler.postlink += [os.path.join(steamworks_bin, 'linux32', 'libsteam_api.so')]
+
+if binary.compiler.target.platform == 'windows':
+  if arch == 'x86_64':
+    binary.compiler.postlink += [os.path.join(steamworks_bin, 'win64', 'steam_api64.lib')]
+  else:
+    binary.compiler.postlink += [os.path.join(steamworks_bin, 'steam_api.lib')]
 
 SteamWorks.extensions += builder.Add(project)
