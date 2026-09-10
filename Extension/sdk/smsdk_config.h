@@ -40,9 +40,9 @@
 /* Basic information exposed publicly */
 #define SMEXT_CONF_NAME			"SteamWorks Extension"
 #define SMEXT_CONF_DESCRIPTION	"Exposes SteamWorks functions to Developers"
-#define SMEXT_CONF_VERSION		"1.2.4"
-#define SMEXT_CONF_AUTHOR		"Kyle Sanderson"
-#define SMEXT_CONF_URL			"http://AlliedMods.net"
+#define SMEXT_CONF_VERSION		"1.3.0"
+#define SMEXT_CONF_AUTHOR		"Kyle Sanderson, AlliedModders, IRQL_NOT_LESS_OR_EQUAL"
+#define SMEXT_CONF_URL			"https://github.com/irql-notlessorequal/SteamWorks"
 #define SMEXT_CONF_LOGTAG		"STEAMWORKS"
 #define SMEXT_CONF_LICENSE		"GPLv3"
 #define SMEXT_CONF_DATESTRING	__DATE__
