@@ -347,6 +347,16 @@ native bool SteamWorks_SetRule(const char[] sKey, const char[] sValue);
 native bool SteamWorks_ClearRules();
 
 /**
+ * Sets whether the server should be advertised on the master server list and
+ * respond to server browser / LAN discovery packets. Defaults to false; set
+ * other server parameters before enabling advertising.
+ *
+ * @param bActive       True to advertise the server, false to hide it.
+ * @return              True on success, false if not connected to Steam.
+ */
+native bool SteamWorks_SetAdvertiseServerActive(bool bActive);
+
+/**
  * Deprecated no-op. Newer Steamworks SDKs removed ForceHeartbeat; server list
  * heartbeats are now sent implicitly by Steam.
  *
@@ -1199,6 +1209,7 @@ public void __ext_SteamWorks_SetNTVOptional()
 	MarkNativeAsOptional("SteamWorks_IsConnected");
 	MarkNativeAsOptional("SteamWorks_SetRule");
 	MarkNativeAsOptional("SteamWorks_ClearRules");
+	MarkNativeAsOptional("SteamWorks_SetAdvertiseServerActive");
 	MarkNativeAsOptional("SteamWorks_ForceHeartbeat");
 	MarkNativeAsOptional("SteamWorks_GetUserGroupStatus");
 	MarkNativeAsOptional("SteamWorks_GetUserGroupStatusAuthID");

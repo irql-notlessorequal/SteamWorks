@@ -190,6 +190,19 @@ static cell_t sm_ClearRules(IPluginContext *pContext, const cell_t *params)
 	return 1;
 }
 
+static cell_t sm_SetAdvertiseServerActive(IPluginContext *pContext, const cell_t *params)
+{
+	ISteamGameServer *pServer = GetGSPointer();
+
+	if (pServer == NULL)
+	{
+		return 0;
+	}
+
+	pServer->SetAdvertiseServerActive(!!params[1]);
+	return 1;
+}
+
 static cell_t sm_ForceHeartbeat(IPluginContext *pContext, const cell_t *params)
 {
 	smutils->LogMessage(myself, "SteamWorks: ForceHeartbeat no longer has any functionality.");
@@ -294,6 +307,7 @@ static sp_nativeinfo_t gsnatives[] = {
 	{"SteamWorks_IsConnected",				sm_IsConnected},
 	{"SteamWorks_SetRule",						sm_SetRule},
 	{"SteamWorks_ClearRules",						sm_ClearRules},
+	{"SteamWorks_SetAdvertiseServerActive",	sm_SetAdvertiseServerActive},
 	{"SteamWorks_ForceHeartbeat",				sm_ForceHeartbeat},
 	{"SteamWorks_HasLicenseForApp",			sm_UserHasLicenseForApp},
 	{"SteamWorks_HasLicenseForAppId",			sm_UserHasLicenseForAppId},
