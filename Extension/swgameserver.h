@@ -19,7 +19,9 @@
 #pragma once
 #include "smsdk_ext.h"
 #include "steam_gameserver.h"
+
 #include "isteamgamecoordinator.h"
+#include "isteamnetworkingsockets.h"
 
 #if defined(STEAM_API_INTERNAL_H) || !defined(STEAM_API_EXPORTS)
 	S_API ISteamClient *g_pSteamClientGameServer; /* This is awful. */
@@ -40,6 +42,7 @@ class SteamWorksGameServer
 		ISteamHTTP *GetHTTP(void);
 		ISteamMatchmaking *GetMatchmaking(void);
 		ISteamGameCoordinator *GetGameCoordinator(void);
+		ISteamNetworkingSockets *GetNetworkingSockets(void);
 
 	public:
 		void Reset(void);
@@ -55,6 +58,7 @@ class SteamWorksGameServer
 		ISteamHTTP *m_pHTTP;
 		ISteamMatchmaking *m_pMatchmaking;
 		ISteamGameCoordinator *m_pGC;
+		ISteamNetworkingSockets *m_pNetworkingSockets;
 		bool loaded;
 };
 

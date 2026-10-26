@@ -18,6 +18,9 @@
 
 #include "gsnatives.h"
 
+#include "steamnetworkingtypes.h"
+#include "steamnetworkingfakeip.h"
+
 static bool IsSteamWorksLoaded(void)
 {
 	return (g_SteamWorks.pSWGameServer->GetSteamClient() != NULL);
@@ -26,6 +29,11 @@ static bool IsSteamWorksLoaded(void)
 static ISteamGameServer *GetGSPointer(void)
 {
 	return g_SteamWorks.pSWGameServer->GetGameServer();
+}
+
+static ISteamNetworkingSockets *GetNetworkingSocketsPointer(void)
+{
+	return g_SteamWorks.pSWGameServer->GetNetworkingSockets();
 }
 
 static CSteamID CreateCommonCSteamID(IGamePlayer *pPlayer, const cell_t *params, unsigned char universeplace = 2, unsigned char typeplace = 3)
@@ -310,6 +318,33 @@ static cell_t sm_GetUserGroupStatusAuthID(IPluginContext *pContext, const cell_t
 	return pServer->RequestUserGroupStatus(checkid, CSteamID(params[2], k_EUniversePublic, k_EAccountTypeClan));
 }
 
+static cell_t sm_GetFakeIP(IPluginContext *pContext, const cell_t *params)
+{
+	ISteamNetworkingSockets *pSockets = GetNetworkingSocketsPointer();
+	if (pSockets == NULL)
+	{
+		return 0;
+	}
+
+	SteamNetworkingFakeIPResult_t info;
+	memset(&info, 0, sizeof(info));
+	pSockets->GetFakeIP(0, &info);
+
+	cell_t *pIP, *pPort;
+	pContext->LocalToPhysAddr(params[1], &pIP);
+	pContext->LocalToPhysAddr(params[2], &pPort);
+
+	if (info.m_eResult != k_EResultOK)
+	{
+		return 0;
+	}
+
+	*pIP = info.m_unIP;
+	*pPort = info.m_unPorts[0];
+
+	return 1;
+}
+
 static sp_nativeinfo_t gsnatives[] = {
 	{"SteamWorks_IsVACEnabled",				sm_IsVACEnabled},
 	{"SteamWorks_GetPublicIP",				sm_GetPublicIP},
@@ -322,6 +357,7 @@ static sp_nativeinfo_t gsnatives[] = {
 	{"SteamWorks_SetRule",						sm_SetRule},
 	{"SteamWorks_ClearRules",						sm_ClearRules},
 	{"SteamWorks_SetAdvertiseServerActive",	sm_SetAdvertiseServerActive},
+	{"SteamWorks_GetFakeIP",				sm_GetFakeIP},
 	{"SteamWorks_ForceHeartbeat",				sm_ForceHeartbeat},
 	{"SteamWorks_HasLicenseForApp",			sm_UserHasLicenseForApp},
 	{"SteamWorks_HasLicenseForAppId",			sm_UserHasLicenseForAppId},
