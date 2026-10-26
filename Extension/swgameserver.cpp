@@ -274,7 +274,8 @@ const char *SteamWorksGameServer::GetLibraryPath(void)
 		libSteamPath = get_loaded_library_path("libsteam_api.so");
 		pLibSteamPath = libSteamPath.c_str();
 #elif defined WIN32_LEAN_AND_MEAN
-		pLibSteamPath = "./bin/steam_api.dll"; /* Naming from SteamTools. */
+		pLibSteamPath = 
+			sizeof(void*) == 8 ? "./bin/x64/steam_api64.dll" : "./bin/steam_api.dll"; /* Naming from SteamTools. */
 #endif
 
 		if (g_SteamWorks.pSWGameData)
