@@ -235,6 +235,21 @@ ISteamGameCoordinator *SteamWorksGameServer::GetGameCoordinator(void)
 	return this->m_pGC;
 }
 
+ISteamNetworkingSockets *SteamWorksGameServer::GetNetworkingSockets(void)
+{
+	if (this->m_pNetworkingSockets == NULL && this->GetSteamClient() != NULL)
+	{
+		HSteamUser hSteamUser;
+		HSteamPipe hSteamPipe;
+		GetUserAndPipe(hSteamUser, hSteamPipe);
+
+		this->m_pNetworkingSockets = static_cast<ISteamNetworkingSockets *>(
+			this->GetSteamClient()->GetISteamGenericInterface(hSteamUser, hSteamPipe, STEAMNETWORKINGSOCKETS_INTERFACE_VERSION));
+	}
+
+	return this->m_pNetworkingSockets;
+}
+
 void SteamWorksGameServer::GetUserAndPipe(HSteamUser &hSteamUser, HSteamPipe &hSteamPipe)
 {
 	hSteamUser = SteamGameServer_GetHSteamUser();
