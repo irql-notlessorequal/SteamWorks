@@ -1,3 +1,11 @@
+> [!WARNING]
+> This repository will be discontinued at the end of 2027.
+> 
+> No new builds or changes will be made after that point.
+>
+>
+> You should use [AlliedModders' official SteamWorks builds](https://github.com/alliedmodders/SM-SteamWorks) instead!
+
 # SteamWorks
 
 Exposing SteamWorks functions to SourcePawn.
